@@ -276,6 +276,33 @@ public:
         return res;
     }
 
+    String getServiceProviderName() {
+        sendAT(GF("+QSPN?"));
+        if (waitResponse(GF(GSM_NL "+QSPN:")) != 1) {
+            // Serial.println( F("No response from AT+QSPN") );
+            return "";
+        }
+        String res = stream.readStringUntil(',');
+        waitResponse();
+        return res;
+    }
+
+    bool setNetworkTimeSyncMode( int mode ) {
+        sendAT(GF("+QNITZ="), mode);
+        return waitResponse() == 1;
+    }
+
+    String getNetworkTimeSyncMode() {
+        sendAT(GF("+QNITZ?"));
+        if (waitResponse(GF(GSM_NL "+QNITZ:")) != 1) {
+            // Serial.println( F("No response from AT+QNITZ") );
+            return "";
+        }
+        String res = stream.readStringUntil('\n');
+        waitResponse();
+        return res;
+    }
+
     SimStatus getSimStatus(unsigned long timeout = 10000L) {
         for (unsigned long start = millis(); millis() - start < timeout; ) {
             sendAT(GF("+CPIN?"));
@@ -637,7 +664,9 @@ protected:
             while (stream.available() > 0) {
                 int a = streamRead();
                 if (a <= 0) continue; // Skip 0x00 bytes, just in case
+                Serial.write('[');
                 Serial.print((char)a);
+                Serial.write(']');
                 data += (char)a;
                 if (r1 && data.endsWith(r1)) {
                     index = 1;
