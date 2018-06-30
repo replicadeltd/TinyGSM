@@ -735,8 +735,8 @@ protected:
         } while (millis() - startMillis < timeout);
         finish:
             if (!index) {
-                // data.trim();
-                if (data.length()) {
+                data.trim();
+                if (data.length() > 0) {
                     DBG("### Unhandled:***", data, "***");
                     for ( int k = 0 ; k < data.length() ; k++ ) {
                         EmbeddedUtils::printHex8( &Serial, data[k] );
