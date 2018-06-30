@@ -380,7 +380,10 @@ public:
         waitResponse();
 
         sendAT(GF("+QIACT"));
-        waitResponse(10000L);
+        if ( waitResponse(60000L, GF("OK")) != 1 ) {
+            Serial.println( F("failed to activate") );
+            return false;
+        }
 
         return true;
     }
@@ -655,6 +658,9 @@ protected:
         String r5s(r5); r5s.trim();
         DBG("### ..:", r1s, ",", r2s, ",", r3s, ",", r4s, ",", r5s); */
         data.reserve(64);
+        // Serial.print( F("waitResponse.data: ***") );
+        // Serial.print( data );
+        // Serial.println( F("***") );
         bool gotData = false;
         int mux = -1;
         int index = 0;
@@ -665,9 +671,28 @@ protected:
                 int a = streamRead();
                 if (a <= 0) continue; // Skip 0x00 bytes, just in case
                 Serial.write('[');
-                Serial.print((char)a);
+                if ( a < 32 ) {
+                    EmbeddedUtils::printHex8( &Serial, a );
+                } else {
+                    Serial.print((char)a);
+                }
                 Serial.write(']');
                 data += (char)a;
+                // if ( r1 ) {
+                //     Serial.print( F("r1: ") );
+                //     String r1str(r1);
+                //     for ( int k = 0 ; k < r1str.length() ; k++ ) {
+                //         EmbeddedUtils::printHex8( &Serial, r1str[k] );
+                //         EmbeddedUtils::print( F(" ") );
+                //     }                        
+                //     EmbeddedUtils::println( "" );
+                //     Serial.print( F("data: ") );
+                //     for ( int k = 0 ; k < data.length() ; k++ ) {
+                //         EmbeddedUtils::printHex8( &Serial, data[k] );
+                //         EmbeddedUtils::print( F(" ") );
+                //     }                        
+                //     EmbeddedUtils::println( "" );
+                // }
                 if (r1 && data.endsWith(r1)) {
                     index = 1;
                     DBG("<<< Got1 '", String(r1), "'");
@@ -710,9 +735,14 @@ protected:
         } while (millis() - startMillis < timeout);
         finish:
             if (!index) {
-                data.trim();
+                // data.trim();
                 if (data.length()) {
-                    DBG("### Unhandled:", data);
+                    DBG("### Unhandled:***", data, "***");
+                    for ( int k = 0 ; k < data.length() ; k++ ) {
+                        EmbeddedUtils::printHex8( &Serial, data[k] );
+                        EmbeddedUtils::print( F(" ") );
+                    }                        
+                    EmbeddedUtils::println( "" );
                 }
                 data = "";
             }
@@ -744,6 +774,41 @@ protected:
                 Serial.print((char)a);
             }
         } while (millis() - startMillis < timeout);
+    }
+
+    bool waitForNTPResponse(uint32_t timeout, uint8_t *buffer, uint8_t bufferSize, uint8_t *bytesread) {
+        int bindex = 0;
+        *bytesread = 0;
+        bool gotstart = false;
+        unsigned long startMillis = millis();
+        do {
+            TINY_GSM_YIELD();
+            while (stream.available() > 0) {
+                uint8_t c = streamRead();
+                EmbeddedUtils::print( F("["));
+                EmbeddedUtils::print(bindex);
+                EmbeddedUtils::print(F("]: "));
+                EmbeddedUtils::printHex8(&Serial,c);
+                EmbeddedUtils::println("");
+                if ( !gotstart && c == 0x1C ) {
+                    gotstart = true;
+                }
+                if ( bindex < bufferSize ) {
+                    buffer[bindex] = c;
+                } else {
+                    Serial.print( F("UDP overread: "));
+                    Serial.println( bindex );
+                }
+
+                if ( gotstart ) {
+                    bindex++;
+                }
+            }
+        } while ( millis() - startMillis < timeout );
+
+        *bytesread = bindex;
+
+        return bindex == 48;
     }
 
     uint16_t waitForHTTPResponse(uint32_t timeout, char * buffer, uint8_t bufferSize) {
