@@ -670,13 +670,13 @@ protected:
             while (stream.available() > 0) {
                 int a = streamRead();
                 if (a <= 0) continue; // Skip 0x00 bytes, just in case
-                Serial.write('[');
-                if ( a < 32 ) {
-                    EmbeddedUtils::printHex8( &Serial, a );
-                } else {
-                    Serial.print((char)a);
-                }
-                Serial.write(']');
+//                Serial.write('[');
+//                if ( a < 32 ) {
+//                    EmbeddedUtils::printHex8( &Serial, a );
+//                } else {
+//                    Serial.print((char)a);
+//                }
+//                Serial.write(']');
                 data += (char)a;
                 // if ( r1 ) {
                 //     Serial.print( F("r1: ") );
@@ -705,7 +705,7 @@ protected:
                     index = 3;
                     DBG("<<< Got3 '", String(r3), "'");
                     goto finish;
-                } else if (r4 && data.endsWith(r4)) {
+                } /* else if (r4 && data.endsWith(r4)) {
                     index = 4;
                     DBG("<<< Got4 '", String(r4), "'");
                     goto finish;
@@ -713,15 +713,6 @@ protected:
                     index = 5;
                     DBG("<<< Got5 '", String(r5), "'");
                     goto finish;
-                } else if (data.endsWith(GF(GSM_NL "+CIPRXGET:"))) {
-                    String mode = stream.readStringUntil(',');
-                    if (mode.toInt() == 1) {
-                        mux = stream.readStringUntil('\n').toInt();
-                        gotData = true;
-                        data = "";
-                    } else {
-                        data += mode;
-                    }
                 } else if (data.endsWith(GF("CLOSED" GSM_NL))) {
                     int nl = data.lastIndexOf(GSM_NL, data.length()-8);
                     int coma = data.indexOf(',', nl+2);
@@ -730,7 +721,7 @@ protected:
                         sockets[mux]->sock_connected = false;
                         data = "";
                     }
-                }
+                } */
             }
         } while (millis() - startMillis < timeout);
         finish:
@@ -738,11 +729,11 @@ protected:
                 data.trim();
                 if (data.length() > 0) {
                     DBG("### Unhandled:***", data, "***");
-                    for ( int k = 0 ; k < data.length() ; k++ ) {
-                        EmbeddedUtils::printHex8( &Serial, data[k] );
-                        EmbeddedUtils::print( F(" ") );
-                    }                        
-                    EmbeddedUtils::println( "" );
+//                    for ( int k = 0 ; k < data.length() ; k++ ) {
+//                        EmbeddedUtils::printHex8( &Serial, data[k] );
+//                        EmbeddedUtils::print( F(" ") );
+//                    }                        
+//                    EmbeddedUtils::println( "" );
                 }
                 data = "";
             }
@@ -764,17 +755,17 @@ protected:
         return waitResponse(1000, r1, r2, r3, r4, r5);
     }
 
-    void printResponse(uint32_t timeout) {
-        unsigned long startMillis = millis();
-        do {
-            TINY_GSM_YIELD();
-            while (stream.available() > 0) {
-                int a = streamRead();
-                if (a <= 0) continue; // Skip 0x00 bytes, just in case
-                Serial.print((char)a);
-            }
-        } while (millis() - startMillis < timeout);
-    }
+//    void printResponse(uint32_t timeout) {
+//        unsigned long startMillis = millis();
+//        do {
+//            TINY_GSM_YIELD();
+//            while (stream.available() > 0) {
+//                int a = streamRead();
+//                if (a <= 0) continue; // Skip 0x00 bytes, just in case
+//                Serial.print((char)a);
+//            }
+//        } while (millis() - startMillis < timeout);
+//    }
 
     bool waitForNTPResponse(uint32_t timeout, uint8_t *buffer, uint8_t bufferSize, uint8_t *bytesread) {
         int bindex = 0;
@@ -785,19 +776,19 @@ protected:
             TINY_GSM_YIELD();
             while (stream.available() > 0) {
                 uint8_t c = streamRead();
-                EmbeddedUtils::print( F("["));
-                EmbeddedUtils::print(bindex);
-                EmbeddedUtils::print(F("]: "));
-                EmbeddedUtils::printHex8(&Serial,c);
-                EmbeddedUtils::println("");
+//                EmbeddedUtils::print( F("["));
+//                EmbeddedUtils::print(bindex);
+//                EmbeddedUtils::print(F("]: "));
+//                EmbeddedUtils::printHex8(&Serial,c);
+//                EmbeddedUtils::println("");
                 if ( !gotstart && c == 0x1C ) {
                     gotstart = true;
                 }
                 if ( bindex < bufferSize ) {
                     buffer[bindex] = c;
-                } else {
-                    Serial.print( F("UDP overread: "));
-                    Serial.println( bindex );
+//                } else {
+//                    Serial.print( F("UDP overread: "));
+//                    Serial.println( bindex );
                 }
 
                 if ( gotstart ) {
