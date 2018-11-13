@@ -169,9 +169,12 @@ public:
             return false;
         }
         sendAT(GF("&FZE0"));  // Factory + Reset + Echo Off
-        if (waitResponse() != 1) {
+        if ( waitResponse(5000L, GF("Call Ready"), GF("OK"), GF("FAIL")) == 3 ) {
             return false;
         }
+        /*if (waitResponse() != 1) {
+            return false;
+        } */
         getSimStatus();
         return true;
     }
@@ -220,9 +223,19 @@ public:
             return false;
         }
         sendAT(GF("+CFUN=1"));
-        if (waitResponse(10000L, GF("Call Ready"), GF("OK"), GF("FAIL")) == 3) {
+        if (waitResponse(10000L, GF(" Call Ready"), GF("Call Ready"), GF("OK"), GF("FAIL")) == 4) {
             return false;
         }
+        /** Keep going until we get an OK */
+        if ( !autoBaud() ) {
+            return false;
+        }
+        /*if (waitResponse(10000L, GF("READY"), GF("NOT READY")) == 2) {
+            return false;
+        }
+        if (waitResponse(10000L, GF("Call Ready")) != 1) {
+            return false;
+        } */
         return init();
     }
 
