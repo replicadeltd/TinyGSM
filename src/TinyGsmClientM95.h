@@ -381,13 +381,18 @@ public:
 
     // GPRS functions
     bool gprsConnect(const char* apn, const char* user, const char* pwd) {
+
         gprsDisconnect();
+        delay( 5000 );
 
         sendAT(GF("+QIFGCNT=0"));
         waitResponse();
 
         sendAT(GF("+QICSGP=1,\""), apn, GF("\",\""), user, GF("\",\""), pwd, GF("\""));
-        waitResponse();
+        if ( waitResponse(5000L, GF("OK")) != 1 ) {
+            Serial.println( F("failed to configure APN....") );
+            return false;
+        }
 
         sendAT(GF("+QIREGAPP"));
         waitResponse();
@@ -429,15 +434,33 @@ public:
     }
 
     // Messaging functions
+    String getSMSServiceCentreAddress() {
+        sendAT(GF("+CSCA?"));
+        if (waitResponse(GF(GSM_NL "+CSCA:")) != 1) {
+            return "";
+        }
+        streamSkipUntil('"'); // Skip mode and format
+        String res = stream.readStringUntil('"');
+        waitResponse();
+        return res;
+    }
 
     bool sendSMS(const String& number, const String& text) {
+        sendSMS( number.c_str(), text.c_str() );
+    }
+    
+    bool sendSMS( const char *number, const char *text ) {        
         sendAT(GF("+CMGF=1"));
+        waitResponse();
+        sendAT(GF("+CSCS=\"GSM\""));
         waitResponse();
         sendAT(GF("+CMGS=\""), number, GF("\""));
         if (waitResponse(GF(">")) != 1) {
             return false;
         }
+        DBG( "Sending message...." );
         stream.print(text);
+        stream.write( '\r' );
         stream.write((char)0x1A);
         return waitResponse(60000L) == 1;
     }
