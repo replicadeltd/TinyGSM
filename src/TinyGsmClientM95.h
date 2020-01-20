@@ -841,7 +841,7 @@ protected:
     uint16_t waitForHTTPResponse(uint32_t timeout, char * buffer, uint8_t bufferSize) {
         unsigned long startMillis = millis();
         uint8_t bufferIndex = 0;
-        uint16_t httpCode = 0;
+        uint16_t httpCode = 408;        /** Timeout */
         do {
             TINY_GSM_YIELD();
             while (stream.available() > 0) {
