@@ -858,7 +858,7 @@ protected:
                     if (strstr((const char *)buffer, "CLOSED") != NULL) {
                         return httpCode;
                     }
-                    if(httpCode == 0 && strstr((const char *)buffer, "HTTP/1.") != NULL) {
+                    if(httpCode == 408 && strstr((const char *)buffer, "HTTP/1.") != NULL) {
                         strtok((char *)buffer, " ");        /** Parse out HTTP/1.x */
 
                         char * codeString = strtok(NULL, " ");
