@@ -175,8 +175,7 @@ public:
         /*if (waitResponse() != 1) {
             return false;
         } */
-        getSimStatus();
-        return true;
+        return getSimStatus() == SIM_READY;
     }
 
     bool autoBaud(unsigned long timeout = 10000L) {
