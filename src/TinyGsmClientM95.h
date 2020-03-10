@@ -9,7 +9,7 @@
 #ifndef TinyGsmClientM95_h
 #define TinyGsmClientM95_h
 
-#define TINY_GSM_DEBUG Serial
+//#define TINY_GSM_DEBUG Serial
 #define TINY_GSM_USE_HEX
 
 #if !defined(TINY_GSM_RX_BUFFER)
@@ -280,7 +280,7 @@ public:
     String getClock() {
         sendAT(GF("+QLTS"));
         if (waitResponse(GF(GSM_NL "+QLTS:")) != 1) {
-            // Serial.println( F("No response from AT+QLTS") );
+            DBG( F("No response from AT+QLTS") );
             return "";
         }
         String res = stream.readStringUntil('\n');
@@ -291,7 +291,7 @@ public:
     String getServiceProviderName() {
         sendAT(GF("+QSPN?"));
         if (waitResponse(GF(GSM_NL "+QSPN:")) != 1) {
-            // Serial.println( F("No response from AT+QSPN") );
+            DBG( F("No response from AT+QSPN") );
             return "";
         }
         String res = stream.readStringUntil(',');
@@ -307,7 +307,7 @@ public:
     String getNetworkTimeSyncMode() {
         sendAT(GF("+QNITZ?"));
         if (waitResponse(GF(GSM_NL "+QNITZ:")) != 1) {
-            // Serial.println( F("No response from AT+QNITZ") );
+            DBG( F("No response from AT+QNITZ") );
             return "";
         }
         String res = stream.readStringUntil('\n');
@@ -389,7 +389,7 @@ public:
 
         sendAT(GF("+QICSGP=1,\""), apn, GF("\",\""), user, GF("\",\""), pwd, GF("\""));
         if ( waitResponse(5000L, GF("OK")) != 1 ) {
-            Serial.println( F("failed to configure APN....") );
+            DBG( F("failed to configure APN....") );
             return false;
         }
 
@@ -398,7 +398,7 @@ public:
 
         sendAT(GF("+QIACT"));
         if ( waitResponse(60000L, GF("OK")) != 1 ) {
-            Serial.println( F("failed to activate") );
+            DBG( F("failed to activate") );
             return false;
         }
 
@@ -846,7 +846,9 @@ protected:
             while (stream.available() > 0) {
                 int a = streamRead();
                 if (a <= 0) continue; // Skip 0x00 bytes, just in case
+#ifdef TINY_GSM_DEBUG
                 Serial.print((char)a);
+#endif
                 if (bufferIndex < bufferSize-1) { // leave room to null-terminate
                     buffer[bufferIndex] = (char)a;
                     bufferIndex++;
