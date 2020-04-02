@@ -845,9 +845,8 @@ protected:
             TINY_GSM_YIELD();
             while (stream.available() > 0) {
                 int a = streamRead();
-                if (a <= 0) continue; // Skip 0x00 bytes, just in case
 #ifdef TINY_GSM_DEBUG
-                Serial.print((char)a);
+                Serial.print((char)a, HEX);
 #endif
                 if (bufferIndex < bufferSize-1) { // leave room to null-terminate
                     buffer[bufferIndex] = (char)a;
@@ -871,6 +870,38 @@ protected:
         } while (millis() - startMillis < timeout);
 
         return httpCode;
+    }
+
+    bool waitForUDPResponse(uint32_t timeout, char * buffer, uint8_t bufferSize) {
+        unsigned long startMillis = millis();
+        uint8_t bufferIndex = 0;
+        bool rv = false;
+        do {
+            TINY_GSM_YIELD();
+            while (stream.available() > 1) {
+#ifdef TINY_GSM_DEBUG
+                Serial.print(F("bufsz: ") );
+                Serial.println( stream.available() );
+#endif
+                bufferIndex = stream.readBytes( buffer, stream.available() );
+#ifdef TINY_GSM_DEBUG
+                for ( int i = 0 ; i < bufferIndex ; i++ ) {
+                    Serial.print((char)buffer[i], HEX);
+                    Serial.print( F(" ") );
+                }
+                Serial.println( "" );
+#endif
+                for ( int i = 0 ; i < bufferIndex - 1 ; i++ ) {
+                    if ( buffer[i] == 0x01 && buffer[i + 1] == 0x03 ) {
+                        return true;
+                    }
+                }
+
+                bufferIndex = 0;
+            }
+        } while (millis() - startMillis < timeout);
+
+        return rv;
     }
 };
 
